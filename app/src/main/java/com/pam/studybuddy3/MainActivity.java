@@ -3,6 +3,8 @@ package com.pam.studybuddy3;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.CountDownTimer;
 import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
@@ -31,8 +33,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void resetTimer() {
 
-        timerTextView.setText("0:25:00");
-        timerSeekBar.setProgress(1500);
+        timerTextView.setText("00:30");
+        timerSeekBar.setProgress(30);
         timerSeekBar.setEnabled(true);
         countdownOn = false;
     }
@@ -84,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
         btnCancel.setEnabled(false);
 
         timerSeekBar.setMax(14400);
-        timerSeekBar.setProgress(1500);
+        timerSeekBar.setProgress(30);
 
         timerSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -139,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         else{
                             updateTimer((int) millisUntilFinished / 1000);
-                            if(millisUntilFinished % 1500000==0){
+                            if(millisUntilFinished % 15==0){
                                 sendNoti();
                             }
                         }
@@ -155,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
                         btnPause.setEnabled(false);
                         btnResume.setEnabled(false);
                         btnCancel.setEnabled(false);
+                        sendNoti();
                         resetTimer();
                     }
                 }.start();
@@ -221,6 +224,7 @@ public class MainActivity extends AppCompatActivity {
                         btnCancel.setEnabled(false);
                         //Enable the start button
                         btnStart.setEnabled(true);
+                        sendNoti();
                         resetTimer();
                     }
                 }.start();
@@ -273,6 +277,8 @@ public class MainActivity extends AppCompatActivity {
     public void sendNoti() {
         int tag = 12345;
         NotificationCompat.Builder notif = new NotificationCompat.Builder(this);
+        Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        notif.setSound(alarmSound);
         notif.setAutoCancel(true);
         notif.setSmallIcon(R.mipmap.ic_launcher);
         notif.setWhen(System.currentTimeMillis());
