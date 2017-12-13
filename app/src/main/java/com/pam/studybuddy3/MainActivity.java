@@ -244,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
                         btnStart.setEnabled(true);
 
                         //Notify the user that CountDownTimer is canceled/stopped
-                        timerTextView.setText("CountDownTimer Canceled/stopped.");
+                        timerTextView.setText("CountDownTimer Canceled");
                         resetTimer();
                     }
                 });
@@ -267,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
                 btnStart.setEnabled(true);
 
                 //Notify the user that CountDownTimer is canceled/stopped
-                timerTextView.setText("CountDownTimer Canceled/stopped.");
+                timerTextView.setText("CountDownTimer Canceled");
                 resetTimer();
             }
         });
