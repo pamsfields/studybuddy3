@@ -4,6 +4,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.CountDownTimer;
+import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,19 +21,24 @@ public class MainActivity extends AppCompatActivity {
     Button timerButton;
     boolean countdownOn = false;
     CountDownTimer countdownTimer;
+    private boolean isPaused = false;
+    private boolean isCanceled = false;
+    private long timeRemaining = 0;
+    private long mPauseTime;
+    private long mStopTimeInFuture;
+    private boolean mPaused = false;
 
 
     public void resetTimer() {
 
-        timerTextView.setText("25:00");
+        timerTextView.setText("0:25:00");
         timerSeekBar.setProgress(1500);
-        countdownTimer.cancel();
-        timerButton.setText("GO!");
         timerSeekBar.setEnabled(true);
         countdownOn = false;
     }
     public void updateTimer(int secondsLeft) {
 
+        int hours = (int) secondsLeft / 3600;
         int minutes = (int) secondsLeft / 60;
         int seconds = secondsLeft - minutes * 60;
         String secondString = Integer.toString(seconds);
@@ -41,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         if (seconds <= 9) {
             if (minutes == 10) {
 
-                timerTextView.setText(Integer.toString(minutes) + ":" + 0 + "" + Integer.toString(seconds));
+                timerTextView.setText(Integer.toString(hours) + ":" +Integer.toString(minutes) + ":" + 0 + "" + Integer.toString(seconds));
 
             } else {
 
@@ -54,44 +60,12 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
-    public void timerButtonOn (View view) {
-
-        System.out.println("tapped button");
-
-        if (countdownOn == false) {
-
-            countdownOn = true;
-            timerSeekBar.setEnabled(false);
-            timerButton.setText("STOP");
-
-
-            countdownTimer = new CountDownTimer(timerSeekBar.getProgress() * 1000 + 100, 1000) {
-                @Override
-                public void onTick(long millisUntilFinished) {
-
-                    updateTimer((int) millisUntilFinished / 1000);
-                    if(millisUntilFinished % 1500000==0){
-                        sendNoti();
-                    }
-                }
-
-                @Override
-                public void onFinish() {
-
-
-                    resetTimer();
-                    sendNoti();
-                    System.out.println("timer is done!");
-
-                }
-            }.start();
-        } else {
-
-            resetTimer();
-        }
-
-
+    public long pause() {
+        mPauseTime = mStopTimeInFuture - SystemClock.elapsedRealtime();
+        mPaused = true;
+        return mPauseTime;
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,7 +73,15 @@ public class MainActivity extends AppCompatActivity {
 
         timerSeekBar = (SeekBar) findViewById(R.id.TimerSeekBar);
         timerTextView = (TextView) findViewById(R.id.timerTextView);
-        timerButton = (Button) findViewById(R.id.timerButton);
+        final Button btnStart = (Button) findViewById(R.id.startButton);
+        final Button btnPause = (Button) findViewById(R.id.btn_pause);
+        final Button btnResume = (Button) findViewById(R.id.btn_resume);
+        final Button btnCancel = (Button) findViewById(R.id.btn_cancel);
+
+        //Initially disabled the pause, resume and cancel button
+        btnPause.setEnabled(false);
+        btnResume.setEnabled(false);
+        btnCancel.setEnabled(false);
 
         timerSeekBar.setMax(14400);
         timerSeekBar.setProgress(1500);
@@ -122,8 +104,172 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        //Set a Click Listener for start button
+        btnStart.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+
+                isPaused = false;
+                isCanceled = false;
+
+                //Disable the start and pause button
+                btnStart.setEnabled(false);
+                btnResume.setEnabled(false);
+                //Enabled the pause and cancel button
+                btnPause.setEnabled(true);
+                btnCancel.setEnabled(true);
+
+                CountDownTimer timer;
+                long millisInFuture = timerSeekBar.getProgress() * 1000 + 100; //30 seconds
+                long countDownInterval = 1000; //1 second
+
+                //Initialize a new CountDownTimer instance
+                timer = new CountDownTimer(millisInFuture,countDownInterval){
+                    public void onTick(long millisUntilFinished){
+                        //do something in every tick
+                        if(isCanceled)
+                        {
+                            //If the user request to cancel or paused the
+                            //CountDownTimer we will cancel the current instance
+                            cancel();
+                        }
+                        else if(isPaused)
+                        {
+                            pause();
+                        }
+                        else{
+                            updateTimer((int) millisUntilFinished / 1000);
+                            if(millisUntilFinished % 1500000==0){
+                                sendNoti();
+                            }
+                        }
+                    }
+
+                    public void onFinish(){
+                        //Do something when count down finished
+                        timerTextView.setText("Done");
+
+                        //Enable the start button
+                        btnStart.setEnabled(true);
+                        //Disable the pause, resume and cancel button
+                        btnPause.setEnabled(false);
+                        btnResume.setEnabled(false);
+                        btnCancel.setEnabled(false);
+                        resetTimer();
+                    }
+                }.start();
+            }
+        });
+
+        //Set a Click Listener for pause button
+        btnPause.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                //When user request to pause the CountDownTimer
+                isPaused = true;
+
+                //Enable the resume and cancel button
+                btnResume.setEnabled(true);
+                btnCancel.setEnabled(true);
+                //Disable the start and pause button
+                btnStart.setEnabled(false);
+                btnPause.setEnabled(false);
+            }
+        });
+
+        //Set a Click Listener for resume button
+        btnResume.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                //Disable the start and resume button
+                btnStart.setEnabled(false);
+                btnResume.setEnabled(false);
+                //Enable the pause and cancel button
+                btnPause.setEnabled(true);
+                btnCancel.setEnabled(true);
+
+                //Specify the current state is not paused and canceled.
+                isPaused = false;
+                isCanceled = false;
+
+                //Initialize a new CountDownTimer instance
+                long millisInFuture = timeRemaining;
+                long countDownInterval = 1000;
+                new CountDownTimer(millisInFuture, countDownInterval){
+                    public void onTick(long millisUntilFinished){
+                        //Do something in every tick
+                        if(isCanceled)
+                        {
+                            //If user requested to pause or cancel the count down timer
+                            cancel();
+                        }
+                        else if(isPaused){
+                            pause();
+                        }
+                        else {
+                            timerTextView.setText("" + millisUntilFinished / 1000);
+                            //Put count down timer remaining time in a variable
+                            timeRemaining = millisUntilFinished;
+                        }
+                    }
+                    public void onFinish(){
+                        //Do something when count down finished
+                        timerTextView.setText("Done");
+                        //Disable the pause, resume and cancel button
+                        btnPause.setEnabled(false);
+                        btnResume.setEnabled(false);
+                        btnCancel.setEnabled(false);
+                        //Enable the start button
+                        btnStart.setEnabled(true);
+                        resetTimer();
+                    }
+                }.start();
+
+                //Set a Click Listener for cancel/stop button
+                btnCancel.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View v){
+                        //When user request to cancel the CountDownTimer
+                        isCanceled = true;
+
+                        //Disable the cancel, pause and resume button
+                        btnPause.setEnabled(false);
+                        btnResume.setEnabled(false);
+                        btnCancel.setEnabled(false);
+                        //Enable the start button
+                        btnStart.setEnabled(true);
+
+                        //Notify the user that CountDownTimer is canceled/stopped
+                        timerTextView.setText("CountDownTimer Canceled/stopped.");
+                        resetTimer();
+                    }
+                });
+            }
+        });
+
+
+        //Set a Click Listener for cancel/stop button
+        btnCancel.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                //When user request to cancel the CountDownTimer
+                isCanceled = true;
+
+                //Disable the cancel, pause and resume button
+                btnPause.setEnabled(false);
+                btnResume.setEnabled(false);
+                btnCancel.setEnabled(false);
+                //Enable the start button
+                btnStart.setEnabled(true);
+
+                //Notify the user that CountDownTimer is canceled/stopped
+                timerTextView.setText("CountDownTimer Canceled/stopped.");
+                resetTimer();
+            }
+        });
 
     }
+
     public void sendNoti() {
         int tag = 12345;
         NotificationCompat.Builder notif = new NotificationCompat.Builder(this);
@@ -139,4 +285,5 @@ public class MainActivity extends AppCompatActivity {
         nm.notify(tag, notif.build());
 
     }
+
 }
