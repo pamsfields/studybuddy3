@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         if (seconds <= 9) {
             if (minutes == 10) {
 
-                timerTextView.setText(Integer.toString(hours) + ":" +Integer.toString(minutes) + ":" + 0 + "" + Integer.toString(seconds));
+                timerTextView.setText(Integer.toString(hours) + ":" + 0 + "" +Integer.toString(minutes) + ":" + 0 + "" + Integer.toString(seconds));
 
             } else {
 
@@ -169,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v){
                 //When user request to pause the CountDownTimer
-                isPaused = true;
+                pause();
 
                 //Enable the resume and cancel button
                 btnResume.setEnabled(true);
