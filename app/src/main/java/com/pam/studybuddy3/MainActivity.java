@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
                         //do something in every tick
                         if(isCanceled)
                         {
-                            //If the user request to cancel or paused the
+                            //If the user request to cancel the
                             //CountDownTimer we will cancel the current instance
                             cancel();
                         }
@@ -203,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
                         //Do something in every tick
                         if(isCanceled)
                         {
-                            //If user requested to pause or cancel the count down timer
+                            //If user requested to cancel the count down timer
                             cancel();
                         }
                         else if(isPaused){
